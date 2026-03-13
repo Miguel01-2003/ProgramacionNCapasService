@@ -13,7 +13,7 @@ public interface IUsuarioJPA {
     
     Resultado Delete(int idusuario);
     
-    Resultado Update(Usuario usuario);
+    Resultado Update(Usuario usuario, int IdUsuario);
     
     Resultado UpdateImagen(String imagen, int IdUsuario);
     

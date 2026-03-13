@@ -1,5 +1,6 @@
 package com.digis01.MFProgramacionNCapasMaven.JPA;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,7 +21,7 @@ public class Estado {
     private String Nombre;
     
     @ManyToOne
-    @JoinColumn( name = "idpais")
+    @JoinColumn(name = "idpais")
     public Pais Pais;
 
     public int getIdEstado() {

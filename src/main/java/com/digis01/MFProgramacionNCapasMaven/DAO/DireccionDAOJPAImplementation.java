@@ -26,11 +26,10 @@ public class DireccionDAOJPAImplementation implements IDireccionJPA{
         Resultado resultado = new Resultado();
         try {
             
-            Direccion direccionJPA = modelMapper.map(direccion, Direccion.class);
-            direccionJPA.Usuario = new Usuario();
-            direccionJPA.Usuario.setIdUsuario(IdUsuario);
+            Usuario usuario = entityManager.find(Usuario.class, IdUsuario);
+            direccion.Usuario = usuario;
             
-            entityManager.persist(direccionJPA);
+            entityManager.persist(direccion);
             
             resultado.correcto = true;
         } catch (Exception ex) {

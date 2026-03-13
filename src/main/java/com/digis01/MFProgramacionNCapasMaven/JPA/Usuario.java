@@ -84,6 +84,16 @@ public class Usuario {
         this.UserName = UserName;
     }
 
+    public String getTelefono() {
+        return Telefono;
+    }
+
+    public void setTelefono(String Telefono) {
+        this.Telefono = Telefono;
+    }
+
+    
+
     public String getNombre() {
         return Nombre;
     }
@@ -140,13 +150,8 @@ public class Usuario {
         this.Sexo = Sexo;
     }
 
-    public String getTelefono() {
-        return Telefono;
-    }
 
-    public void setTelefono(String Telefono) {
-        this.Telefono = Telefono;
-    }
+    
 
     public String getCelular() {
         return Celular;

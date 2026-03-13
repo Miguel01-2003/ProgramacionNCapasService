@@ -3,7 +3,9 @@ package com.digis01.MFProgramacionNCapasMaven.RestController;
 import com.digis01.MFProgramacionNCapasMaven.DAO.UsuarioDAOJPAImplementation;
 import com.digis01.MFProgramacionNCapasMaven.JPA.Resultado;
 import com.digis01.MFProgramacionNCapasMaven.JPA.Usuario;
+import java.util.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +15,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @RestController
@@ -30,7 +34,7 @@ public class UsuarioRestController {
             Resultado resultado = usuariosDAOJPAImplementation.GetAll();
             if(resultado.correcto){
                 if(resultado.objects != null || !resultado.objects.isEmpty()){
-                    return ResponseEntity.ok(resultado.objects);
+                    return ResponseEntity.ok(resultado);
                 }else{
                     return ResponseEntity.noContent().build();
                 }
@@ -48,7 +52,7 @@ public class UsuarioRestController {
             Resultado resultado = usuariosDAOJPAImplementation.GetById(IdUsuario);           
             if(resultado.correcto){
                 if(resultado.object != null){               
-                    return ResponseEntity.ok(resultado.object);                   
+                    return ResponseEntity.ok(resultado);                   
                 }else{                   
                     return ResponseEntity.noContent().build();                   
                 }
@@ -61,24 +65,48 @@ public class UsuarioRestController {
         
     }
     
-    @PostMapping
-    public ResponseEntity Add(@RequestBody Usuario Usuario){
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity Add(@RequestPart("usuario") Usuario usuario, @RequestPart(name = "imagen", required = false) MultipartFile imagen){
         try {
-            Resultado resultado = usuariosDAOJPAImplementation.Add(Usuario);
+            if(imagen != null && !imagen.isEmpty()){
+                //Transformar a base64 y setear al usuario
+                String[] nombreArchivo = imagen.getOriginalFilename().split("\\.");
+
+                if (nombreArchivo[1].equals("jpg") || nombreArchivo[1].equals("png")) {
+
+                    try {
+                        String base64 = Base64.getEncoder().encodeToString(imagen.getBytes());
+                        usuario.setImagen(base64);
+
+                    } catch (Exception ex) {
+                        System.out.println("Problema con el archivo");
+                        System.out.println("Error: " + ex);
+                    }
+
+                } else if (imagen != null) {
+                    System.out.println("Archivo incorrecto");
+                }
+                
+            }
+            usuario.setStatus(1);
+            
+            Resultado resultado = usuariosDAOJPAImplementation.Add(usuario);
+            
+            
             if(resultado.correcto){
                 return ResponseEntity.ok(resultado);
             }else{
-                return ResponseEntity.badRequest().body(resultado.mensajeError);
+                return ResponseEntity.badRequest().body(resultado);
             }                 
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(ex);  
         }      
     }
     
-    @PutMapping
-    public ResponseEntity Update(@RequestBody Usuario Usuario){
+    @PutMapping("/{IdUsuario}")
+    public ResponseEntity Update(@RequestBody Usuario Usuario, @PathVariable("IdUsuario") int IdUsuario){
         try {
-            Resultado resultado = usuariosDAOJPAImplementation.Update(Usuario);
+            Resultado resultado = usuariosDAOJPAImplementation.Update(Usuario, IdUsuario);
             if(resultado.correcto){
                 return ResponseEntity.ok(resultado);
             }else{
@@ -118,11 +146,37 @@ public class UsuarioRestController {
         }
     }
     
-    @PatchMapping("/imagen/{IdUsuario}/{imagen}")
-    public ResponseEntity UpdateImagen(@PathVariable("IdUsuario") int IdUsuario,
-            @PathVariable("imagen") String imagen){
+    @PutMapping(value = "/imagen/{IdUsuario}" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity UpdateImagen(@PathVariable("IdUsuario") int IdUsuario, @RequestPart(required = false) MultipartFile imagen){
+        Resultado resultado = new Resultado();
         try {
-            Resultado resultado = usuariosDAOJPAImplementation.UpdateImagen(imagen, IdUsuario);
+            
+            if(imagen != null && !imagen.isEmpty()){
+                //Transformar a base64 y setear al usuario
+                String[] nombreArchivo = imagen.getOriginalFilename().split("\\.");
+
+                if (nombreArchivo[1].equals("jpg") || nombreArchivo[1].equals("png")) {
+
+                    try {
+                        String base64 = Base64.getEncoder().encodeToString(imagen.getBytes());
+                        resultado = usuariosDAOJPAImplementation.UpdateImagen(base64, IdUsuario);
+                        
+                    } catch (Exception ex) {
+                        System.out.println("Problema con el archivo");
+                        System.out.println("Error: " + ex);
+                        resultado.correcto = false;
+                    }
+
+                } else if (imagen != null) {
+                    System.out.println("Archivo incorrecto");
+                    resultado.correcto = false;
+                }
+                
+            }else{
+                    resultado = usuariosDAOJPAImplementation.UpdateImagen("", IdUsuario);
+                }
+            
+            
             if(resultado.correcto){
                 return ResponseEntity.ok(resultado);
             }else{
@@ -132,4 +186,24 @@ public class UsuarioRestController {
              return ResponseEntity.badRequest().body(ex);
         } 
     }
+
+    @PostMapping("/busqueda")
+    public ResponseEntity BuscarUsuarios(@RequestBody Usuario Usuario){
+        try {           
+            Resultado resultado = usuariosDAOJPAImplementation.BuscarUsuario(Usuario);
+            
+            if(resultado.correcto){
+                if(resultado.objects != null && !resultado.objects.isEmpty()){
+                    return ResponseEntity.ok(resultado);
+                }else{
+                    return ResponseEntity.noContent().build();
+                }
+            }else{
+                return ResponseEntity.badRequest().body(resultado.mensajeError);
+            }           
+        } catch (Exception ex) {            
+            return ResponseEntity.badRequest().body(ex);           
+        }     
+    }
+
 }
